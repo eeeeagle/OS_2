@@ -7,7 +7,7 @@ double str_to_double(const std::string& str)
 {
 	try
 	{
-		unsigned long i{ std::stod(str) };
+		double i{ std::stod(str) };
 		return i;
 	}
 	catch (std::invalid_argument const& ex)
