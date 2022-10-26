@@ -31,18 +31,18 @@ double mathematical_expectation(const double value[3]) /* TO DO - DIVIDE FOR THR
 
 int main(int argc, char** argv)
 {
-	if (argc != 1 || argc != 4)
-	{
-		std::cout	<< "Wrong arguments. Use -help to get more information.\n\n"
-					<< "EXAMPLE:\n"
-					<< "    .../OS_2.exe -help\n\n";
-		exit(EXIT_FAILURE);
-	}
-	if (argc == 2 && argv[1] == std::string("-help"))
+	if (argc == 2 && std::string(argv[1]) == "-help")
 	{
 		std::cout	<< "Specify 3 values as arguments to peform sample variance of 3 values\n\n"
 					<< "EXAMPLE:\n"
 					<< "    .../OS_2.exe <value_1> <value_2> <value_3>\n\n";
+		exit(EXIT_FAILURE);
+	}
+	else if (argc != 1 && argc != 4)
+	{
+		std::cout	<< "Wrong arguments. Use -help to get more information.\n\n"
+					<< "EXAMPLE:\n"
+					<< "    .../OS_2.exe -help\n\n";
 		exit(EXIT_FAILURE);
 	}
 
