@@ -1,90 +1,44 @@
-#include <iostream>
-#include <sstream>
-#include <Windows.h>
-#define N 3
+/*
+	BDJM
 
-double str_to_double(const std::string& str)
+	B Ц потоки одного процесса;
+	D Ц критические секции;
+	J Ц файлы, отображаемые в пам€ть;
+	M - выборочна€ дисперси€ трех чисел;
+*/
+
+#include "Source.hpp"
+#include <string>
+
+constexpr auto VALUE_NUM = 3;
+
+int main()
 {
-	try
-	{
-		double i{ std::stod(str) };
-		return i;
-	}
-	catch (std::invalid_argument const& ex)
-	{
-		std::cout	<< "[!] " << ex.what() << " [!]\n"
-					<< "INVALID TYPE: " << std::string(str) << '\n'
-					<< "    Value must be double float\n\n";
-			
-	}
-	catch (std::out_of_range const& ex)
-	{
-		std::cout	<< "[!] " << ex.what() << " [!]\n"
-					<< "OUT OF RANGE: value = " << std::string(str) << "\n"
-					<< "    Avaible value rangemust be double float\n\n";
-	}
-	exit(EXIT_FAILURE);
-}
+	DWORD info_sum;
+	DWORD info_sub;
+	DWORD info_div;
+	DWORD info_sqrt;
+	CreateThread(NULL, 0, &Sum, NULL, 0, &info_sum);
+	CreateThread(NULL, 0, &Sub, NULL, 0, &info_sub);
+	CreateThread(NULL, 0, &Div, NULL, 0, &info_div);
+	CreateThread(NULL, 0, &Sqrt, NULL, 0, &info_sqrt);
 
-double mathematical_expectation(const double value[N]) /* TO DO - DIVIDE FOR THREADS*/
-{
-	return (value[0] + value[1] + value[2]) / N;
-}
-
-int main(int argc, char** argv)
-{
-	if (argc == 2 && std::string(argv[1]) == "-help")
+	double value[VALUE_NUM]{};
 	{
-		std::cout	<< "Specify 3 values as arguments to peform sample variance of 3 values\n\n"
-					<< "EXAMPLE:\n"
-					<< "    .../OS_2.exe <value_1> <value_2> <value_3>\n\n";
-		exit(EXIT_SUCCESS);
-	}
-	else if (argc != 1 && argc != 4)
-	{
-		std::cout	<< "Wrong arguments. Use -help to get more information.\n\n"
-					<< "EXAMPLE:\n"
-					<< "    .../OS_2.exe -help\n\n";
-		exit(EXIT_FAILURE);
-	}
-
-	double value[N] = {0, 0, 0};
-	if (argc == 4)
-	{
-		for (unsigned i = 0; i < N; i++)
+		std::cout << "Enter values:\n";
+		std::string buffer;
+		for (unsigned i = 0; i < VALUE_NUM; i++)
 		{
-			value[i] = str_to_double(argv[i + 1]);
-			std::cout << "Read value " << i + 1 << " = " << value[i] << '\n';
-		}
-	}
-	else
-	{
-		std::string input[N];
-		for (unsigned i = 0; i < N; i++)
-		{
-			std::cout << "Enter value " << i + 1 << " = ";
-			std::cin >> input[i];
-			value[i] = str_to_double(input[i]);
+			std::cout << "x_" << i + 1 << " = ";
+			std::cin >> buffer;
+			value[i] = std::stod(buffer);
 		}
 	}
 
 	/*
 		to do
 	
-		WRITE FILE
-		CREATE THREAD
-
-	*/
-
-	std::cout << "\nPerforming sample variance:\n";
-
-	/*
-		to do
-
-		READ FILE
-		CLOSE THREAD
-		PRINT RESULT
-
+		???
 	*/
 
 	return 0;
