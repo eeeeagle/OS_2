@@ -127,7 +127,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Div.cpp" />
     <ClCompile Include="Source.cpp" />
+    <ClCompile Include="Sqrt.cpp" />
+    <ClCompile Include="Sub.cpp" />
+    <ClCompile Include="Sum.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Source.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
