@@ -3,24 +3,29 @@
 
 DWORD WINAPI Sub(LPVOID param)
 {
-    HANDLE file_a = CreateFile(L"\\\\.\\file\\sub_a", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    HANDLE file_b = CreateFile(L"\\\\.\\file\\sub_b", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    EnterCriticalSection(&cs_sub);
 
-    while (true)
-    {
-        double_convert received_a;
-        double_convert received_b;
-        DWORD real_reading_a = 0;
-        DWORD real_reading_b = 0;
+    HANDLE file_values = CreateFileW(values_path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    HANDLE file_subtrahend = CreateFileW(div_a_path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
-        ReadFile(file_a, &received_a.bytes, sizeof(double), &real_reading_a, NULL);
-        ReadFile(file_b, &received_b.bytes, sizeof(double), &real_reading_b, NULL);
+    HANDLE mapping_values = CreateFileMappingW(file_values, 0, PAGE_READONLY, 0, 0, NULL);
+    HANDLE mapping_subtrahend = CreateFileMappingW(file_subtrahend, 0, PAGE_READONLY, 0, 0, NULL);
+    if (mapping_values == NULL || mapping_subtrahend == NULL)
+        ExitThread(-1);
 
-        double_convert res;
-        DWORD real_reading_res = 0;
-        res.value = received_a.value - received_b.value;
+    double* values = (double*)MapViewOfFile(mapping_values, PAGE_READONLY, 0, 0, NULL);
+    double* subtrahend = (double*)MapViewOfFile(mapping_subtrahend, PAGE_READONLY, 0, 0, NULL);
+    if (values == NULL || subtrahend == NULL)
+        ExitThread(-1);
+    
+    double res[VALUE_NUM];
+    for (unsigned i = 0; i < VALUE_NUM; i++)
+        res[i] = values[i] - *subtrahend;
 
-        HANDLE file_res = CreateFile(L"\\\\.\\file\\sub_res", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-        WriteFile(file_res, res.bytes, sizeof(double), &real_reading_res, NULL);
-    }
+    HANDLE file_res = CreateFileW(sub_path, GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    DWORD written_bytes = 0;
+    WriteFile(file_res, res, sizeof(double) * VALUE_NUM, &written_bytes, NULL);
+
+    LeaveCriticalSection(&cs_sub);
+    return 0UL;
 }

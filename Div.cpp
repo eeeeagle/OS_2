@@ -3,24 +3,25 @@
 
 DWORD WINAPI Div(LPVOID param)
 {
-    HANDLE file_a = CreateFile(L"\\\\.\\file\\div_a", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    HANDLE file_b = CreateFile(L"\\\\.\\file\\div_b", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    DivParams* real_param = (DivParams*)param;
 
-    while (true)
-    {
-        double_convert received_a;
-        double_convert received_b;
-        DWORD real_reading_a = 0;
-        DWORD real_reading_b = 0;
+    EnterCriticalSection(&cs_div);
 
-        ReadFile(file_a, &received_a.bytes, sizeof(double), &real_reading_a, NULL);
-        ReadFile(file_b, &received_b.bytes, sizeof(double), &real_reading_b, NULL);
+    HANDLE file_value = CreateFileW(real_param->in.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    HANDLE mapping_value = CreateFileMappingW(file_value, 0, PAGE_READONLY, 0, 0, NULL);
+    if (mapping_value == NULL)
+        ExitThread(-1);
 
-        double_convert res;
-        DWORD real_reading_res = 0;
-        res.value = received_a.value / received_b.value;
+    double* value = (double*)MapViewOfFile(mapping_value, PAGE_READONLY, 0, 0, NULL);
+    if (value == NULL)
+        ExitThread(-1);
 
-        HANDLE file_res = CreateFile(L"\\\\.\\file\\div_res", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-        WriteFile(file_res, res.bytes, sizeof(double), &real_reading_res, NULL);
-    }
+    double res = *value / real_param->divider;
+
+    HANDLE file_res = CreateFileW(real_param->out.c_str(), GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    DWORD written_bytes = 0;
+    WriteFile(file_res, &res, sizeof(double), &written_bytes, NULL);
+
+    LeaveCriticalSection(&cs_div);
+    return 0UL;
 }
