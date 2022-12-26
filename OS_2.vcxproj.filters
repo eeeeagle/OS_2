@@ -21,7 +21,7 @@
     <ClCompile Include="Div.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="Sqrt.cpp">
+    <ClCompile Include="Sqr.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="Sub.cpp">
