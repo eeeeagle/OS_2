@@ -361,10 +361,11 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-/values.dat
-/sum_b.dat
-/sum_a.dat
-/sub.dat
-/sqr.dat
-/div_b.dat
-/div_a.dat
+
+*.dat
+
+
+
+
+
+
