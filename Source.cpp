@@ -11,6 +11,8 @@ void calc(CRITICAL_SECTION& cs)
 
 int main()
 {
+	CreateDirectoryW(path_temp, NULL);
+
 	double values[VALUE_NUM]{};
 	{
 		std::cout << "Enter values:" << '\n';
@@ -78,6 +80,9 @@ int main()
 	std::cout << '\n' << '\n' << "Res value = " << *res << '\n';
 	UnmapViewOfFile(res);
 	CloseHandle(file_res);
+	CloseHandle(mapping_res);
+	
+	system("pause");
 
 	DeleteFileW(path_values);
 	DeleteFileW(path_sum_1);
@@ -87,6 +92,6 @@ int main()
 	DeleteFileW(path_sub);
 	DeleteFileW(path_sqr);
 
-	system("pause");
+	RemoveDirectoryW(path_temp);
 	return 0;
 }

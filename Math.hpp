@@ -3,13 +3,14 @@
 
 constexpr auto VALUE_NUM = 3;
 
-const wchar_t* path_values  = L".\\values.dat";
-const wchar_t* path_sum_1   = L".\\sum_a.dat";
-const wchar_t* path_sum_2   = L".\\sum_b.dat";
-const wchar_t* path_div_1   = L".\\div_a.dat";
-const wchar_t* path_div_2   = L".\\div_b.dat";
-const wchar_t* path_sub     = L".\\sub.dat";
-const wchar_t* path_sqr     = L".\\sqr.dat";
+const wchar_t* path_temp    = L".\\temp";
+const wchar_t* path_values  = L".\\temp\\values.dat";
+const wchar_t* path_sum_1   = L".\\temp\\sum_a.dat";
+const wchar_t* path_sum_2   = L".\\temp\\sum_b.dat";
+const wchar_t* path_div_1   = L".\\temp\\div_a.dat";
+const wchar_t* path_div_2   = L".\\temp\\div_b.dat";
+const wchar_t* path_sub     = L".\\temp\\sub.dat";
+const wchar_t* path_sqr     = L".\\temp\\sqr.dat";
 
 CRITICAL_SECTION cs_wait_1;
 CRITICAL_SECTION cs_wait_2;
@@ -44,6 +45,8 @@ DWORD WINAPI Sum_1(LPVOID param)
     for (unsigned i = 0; i < VALUE_NUM; i++)
         res += values[i];
     UnmapViewOfFile(values);
+    CloseHandle(mapping_values);
+    CloseHandle(file_values);
 
     std::cout << "[SUM_1] CALCULATED SUM = " << res << '\n';
     std::cout << "[SUM_1] WRITING TO FILE..." << '\n';
@@ -51,6 +54,7 @@ DWORD WINAPI Sum_1(LPVOID param)
     HANDLE file_res = CreateFileW(path_sum_1, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     DWORD written_bytes = 0;
     WriteFile(file_res, &res, sizeof(double), &written_bytes, NULL);
+    CloseHandle(file_res);
 
     std::cout << "[SUM_1] WROTE TO FILE. END." << '\n';
 
@@ -83,6 +87,8 @@ DWORD WINAPI Sum_2(LPVOID param)
     for (unsigned i = 0; i < VALUE_NUM; i++)
         res += values[i];
     UnmapViewOfFile(values);
+    CloseHandle(mapping_values);
+    CloseHandle(file_values);
 
     std::cout << "[SUM_2] CALCULATED SUM = " << res << '\n';
     std::cout << "[SUM_2] WRITING TO FILE..." << '\n';
@@ -90,6 +96,7 @@ DWORD WINAPI Sum_2(LPVOID param)
     HANDLE file_res = CreateFileW(path_sum_2, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     DWORD written_bytes = 0;
     WriteFile(file_res, &res, sizeof(double), &written_bytes, NULL);
+    CloseHandle(file_res);
 
     std::cout << "[SUM_2] WROTE TO FILE. END." << '\n';
 
@@ -120,6 +127,8 @@ DWORD WINAPI Div_1(LPVOID param)
 
     double res = *value / VALUE_NUM;
     UnmapViewOfFile(value);
+    CloseHandle(mapping_value);
+    CloseHandle(file_value);
 
     std::cout << "[DIV_1] CALCULATED DIV = " << res << '\n';
     std::cout << "[DIV_1] WRITING TO FILE..." << '\n';
@@ -127,6 +136,7 @@ DWORD WINAPI Div_1(LPVOID param)
     HANDLE file_res = CreateFileW(path_div_1, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     DWORD written_bytes = 0;
     WriteFile(file_res, &res, sizeof(double), &written_bytes, NULL);
+    CloseHandle(file_res);
 
     std::cout << "[DIV_1] WROTE TO FILE. END." << '\n';
 
@@ -157,6 +167,8 @@ DWORD WINAPI Div_2(LPVOID param)
 
     double res = *value / 2.0;
     UnmapViewOfFile(value);
+    CloseHandle(mapping_value);
+    CloseHandle(file_value);
 
     std::cout << "[DIV_2] CALCULATED DIV = " << res << '\n';
     std::cout << "[DIV_2] WRITING TO FILE..." << '\n';
@@ -164,6 +176,7 @@ DWORD WINAPI Div_2(LPVOID param)
     HANDLE file_res = CreateFileW(path_div_2, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     DWORD written_bytes = 0;
     WriteFile(file_res, &res, sizeof(double), &written_bytes, NULL);
+    CloseHandle(file_res);
 
     std::cout << "[DIV_2] WROTE TO FILE. END." << '\n';
 
@@ -204,12 +217,17 @@ DWORD WINAPI Sub(LPVOID param)
     }
     UnmapViewOfFile(values);
     UnmapViewOfFile(subtrahend);
+    CloseHandle(mapping_values);
+    CloseHandle(mapping_subtrahend);
+    CloseHandle(file_values);
+    CloseHandle(file_subtrahend);
 
     std::cout << "[SUB] WRITING TO FILE..." << '\n';
 
     HANDLE file_res = CreateFileW(path_sub, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     DWORD written_bytes = 0;
     WriteFile(file_res, res, sizeof(double) * VALUE_NUM, &written_bytes, NULL);
+    CloseHandle(file_res);
 
     std::cout << "[SUB] WROTE TO FILE. END." << '\n';
 
@@ -228,7 +246,6 @@ DWORD WINAPI Sqr(LPVOID param)
     std::cout << "[SQR] STARTED. READING FROM FILES..." << '\n';
 
     HANDLE file_values = CreateFileW(path_sub, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-
     HANDLE mapping_values = CreateFileMappingW(file_values, 0, PAGE_READONLY, 0, 0, NULL);
     if (mapping_values == 0)
         ExitProcess(-21);
@@ -246,12 +263,15 @@ DWORD WINAPI Sqr(LPVOID param)
         std::cout << "[SQR] CALCULATED SQR[" << i << "] = " << res[i] << '\n';
     }
     UnmapViewOfFile(values);
+    CloseHandle(mapping_values);
+    CloseHandle(file_values);
 
     std::cout << "[SQR] WRITING TO FILE..." << '\n';
 
     HANDLE file_res = CreateFileW(path_sqr, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     DWORD written_bytes = 0;
     WriteFile(file_res, res, sizeof(double) * VALUE_NUM, &written_bytes, NULL);
+    CloseHandle(file_res);
 
     std::cout << "[SQR] WROTE TO FILE. END." << '\n';
 
