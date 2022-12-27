@@ -1,21 +1,19 @@
-/*
-	BDJM
-
-	B Ц потоки одного процесса;
-	D Ц критические секции;
-	J Ц файлы, отображаемые в пам€ть;
-	M - выборочна€ дисперси€ трех чисел;
-*/
-
-#include "Source.hpp"
+#include "Math.hpp"
 #include <string>
 
+void calc(CRITICAL_SECTION& cs)
+{
+	EnterCriticalSection(&cs_wait_2);
+	LeaveCriticalSection(&cs);
+	while (cs_wait_2.LockCount != -1);
+	LeaveCriticalSection(&cs_wait_1);
+}
 
 int main()
 {
 	double values[VALUE_NUM]{};
 	{
-		std::cout << "Enter values:\n";
+		std::cout << "Enter values:" << '\n';
 		std::string buffer;
 		for (unsigned i = 0; i < VALUE_NUM; i++)
 		{
@@ -23,40 +21,72 @@ int main()
 			std::cin >> buffer;
 			values[i] = std::stod(buffer);
 		}
+		std::cout << '\n';
 	}
-		
-	HANDLE file_values = CreateFileW(values_path, GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+	HANDLE file_values = CreateFileW(path_values, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	DWORD written_bytes = 0;
 	WriteFile(file_values, values, sizeof(values), &written_bytes, NULL);
+	CloseHandle(file_values);
 
-	SumParams param_sum_a{	values_path, sum_a_path };
-	SumParams param_sum_b{	   sqr_path, sum_b_path };
-
-	DivParams param_div_a{ sum_a_path, div_a_path, VALUE_NUM };
-	DivParams param_div_b{ sum_b_path, div_b_path,         2 };
-
-	InitializeCriticalSection(&cs_sum);
-	InitializeCriticalSection(&cs_div);
+	InitializeCriticalSection(&cs_wait_1);
+	InitializeCriticalSection(&cs_wait_2);
+	InitializeCriticalSection(&cs_sum_1);
+	InitializeCriticalSection(&cs_sum_2);
+	InitializeCriticalSection(&cs_div_1);
+	InitializeCriticalSection(&cs_div_2);
 	InitializeCriticalSection(&cs_sub);
 	InitializeCriticalSection(&cs_sqr);
 
-	DWORD info_sum_a;
-	DWORD info_div_a;
-	DWORD info_sub;
-	DWORD info_sqr;
-	DWORD info_sum_b;
-	DWORD info_div_b;
+	EnterCriticalSection(&cs_sum_1);
+	EnterCriticalSection(&cs_sum_2);
+	EnterCriticalSection(&cs_div_1);
+	EnterCriticalSection(&cs_div_2);
+	EnterCriticalSection(&cs_sub);
+	EnterCriticalSection(&cs_sqr);
 
-	CreateThread(NULL, 0, &Sum, (LPVOID)&param_sum_a, 0, &info_sum_a);
-	CreateThread(NULL, 0, &Div, (LPVOID)&param_div_a, 0, &info_div_a);
-	CreateThread(NULL, 0, &Sub,					NULL, 0, &info_sub);
-	CreateThread(NULL, 0, &Sqr,					NULL, 0, &info_sqr);
-	CreateThread(NULL, 0, &Sum, (LPVOID)&param_sum_b, 0, &info_sum_b);
-	CreateThread(NULL, 0, &Div, (LPVOID)&param_div_b, 0, &info_div_b);
+	DWORD id_sum_1;
+	DWORD id_div_1;
+	DWORD id_sub;
+	DWORD id_sqr;
+	DWORD id_sum_2;
+	DWORD id_div_2;
 
-	HANDLE file_res = CreateFileW(div_b_path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	CreateThread(NULL, 0, &Sum_1, NULL, 0, &id_sum_1);
+	CreateThread(NULL, 0, &Div_1, NULL, 0, &id_div_1);
+	CreateThread(NULL, 0, &Sub,	  NULL, 0, &id_sub);
+	CreateThread(NULL, 0, &Sqr,	  NULL, 0, &id_sqr);
+	CreateThread(NULL, 0, &Sum_2, NULL, 0, &id_sum_2);
+	CreateThread(NULL, 0, &Div_2, NULL, 0, &id_div_2);
+
+	calc(cs_sum_1);
+	calc(cs_div_1);
+	calc(cs_sub);
+	calc(cs_sqr);
+	calc(cs_sum_2);
+	calc(cs_div_2);
+
+	HANDLE file_res = CreateFileW(path_div_2, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	HANDLE mapping_res = CreateFileMappingW(file_res, 0, PAGE_READONLY, 0, 0, NULL);
-	double* res = (double*)MapViewOfFile(mapping_res, PAGE_READONLY, 0, 0, NULL);
+	if (mapping_res == 0)
+		ExitProcess(-9);
 
+	double* res = (double*)MapViewOfFile(mapping_res, FILE_MAP_READ, 0, 0, NULL);
+	if (res == nullptr)
+		ExitProcess(-10);
+
+	std::cout << '\n' << '\n' << "Res value = " << *res << '\n';
+	UnmapViewOfFile(res);
+	CloseHandle(file_res);
+
+	DeleteFileW(path_values);
+	DeleteFileW(path_sum_1);
+	DeleteFileW(path_sum_2);
+	DeleteFileW(path_div_1);
+	DeleteFileW(path_div_2);
+	DeleteFileW(path_sub);
+	DeleteFileW(path_sqr);
+
+	
 	return 0;
 }
