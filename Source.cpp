@@ -87,5 +87,6 @@ int main()
 	DeleteFileW(path_sub);
 	DeleteFileW(path_sqr);
 
+	system("pause");
 	return 0;
 }
